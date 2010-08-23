@@ -1,0 +1,8 @@
+bash config files for mac osX 10.6
+
+Features:
+* Ctrl + left/right arrows move forward/backward a word on bash
+* Up/ down arrow partial search in history
+* history size increased
+* mvimt alias added to add a new tab on macvim
+* show branch on shell prompt when you are inside a Git repo
