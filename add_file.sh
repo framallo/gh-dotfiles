@@ -6,5 +6,8 @@
 # .profile -> ~/.gh-dotfiles/profile
 # 
 
-`echo mv ~/.$1 ~/.gh-dotfiles/$1
-`echo ln -s ~/.$1 ~/.sh-dotfiles/$1
+
+echo mv -i ~/.$1 ~/.gh-dotfiles/$1
+mv -i ~/.$1 ~/.gh-dotfiles/$1
+echo ln -s  ~/.gh-dotfiles/$1 ~/.$1
+ln -s  ~/.gh-dotfiles/$1 ~/.$1
