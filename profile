@@ -55,3 +55,5 @@ alias r="rails"
 alias mvimt="mvim --remote-tab"
 
 source ~/.bash_git
+
+export PATH=$PATH:~/.gh-dotfiles/bin
