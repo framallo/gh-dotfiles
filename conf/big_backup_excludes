@@ -1,0 +1,17 @@
+/tmp/*
+/Network/*
+/cores/*
+*/.Trash
+.Trash
+/afs/*
+/automount/*
+/private/tmp/*
+/private/var/run/*
+/private/var/spool/postfix/*
+/private/var/vm/*
+/Previous Systems.localized
+.Spotlight-*/
+Movies
+Music/recorded
+DownloadsIncomplete
+
