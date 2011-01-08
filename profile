@@ -2,16 +2,16 @@ set match-hidden-files off
 set page-completions off
 set completion-query-items 350
 
-shopt -s histappend
-declare -x 'PROMPT_COMMAND=history -a'
-
+# create big history file 
+unset HISTFILESIZE
 export HISTSIZE=10000
-export HISTFILESIZE=10000
+export PROMPT_COMMAND="history -a"
+export HISTSIZE PROMPT_COMMAND
+shopt -s histappend
 # don't put duplicate lines in the history. 
 export HISTCONTROL=ignoredups 
 # ... and ignore same sucessive entries. 
 export HISTCONTROL=ignoreboth 
-
 
 
 # GIT ------------------------------------
@@ -32,6 +32,5 @@ alias r="rails"
 # vim alias
 alias mvimt="mvim --remote-tab"
 alias v="open -a MacVim"
-
 
 export PATH=$PATH:~/.gh-dotfiles/bin
