@@ -1,0 +1,6 @@
+#!/bin/bash
+
+TASKS_RC=$HOME/.gh-dotfiles/etc/.taskrc
+
+task rc:$TASKS_RC $*
+
