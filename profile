@@ -18,6 +18,7 @@ export HISTCONTROL=ignoreboth
 # show current branch on shell
 export PS1='\[\033[1;33m\]\w\[\033[0m\]$ '
 source ~/.gh-dotfiles/bash_git
+source ~/.gh-dotfiles/task_completion.sh
 
 # add short cut keys for terminal app
 # Ctrl left   right word
@@ -33,4 +34,10 @@ alias r="rails"
 alias mvimt="mvim --remote-tab"
 alias v="open -a MacVim"
 
+# task alias
+alias t="task"
+
 export PATH=$PATH:~/.gh-dotfiles/bin
+
+# set editor for gem open
+export EDITOR=vim
