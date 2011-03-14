@@ -13,6 +13,7 @@
 # Files
 data.location=~/.task-ts
 
+verbose=no
 # Color theme (uncomment one to use)
 #include /opt/local/share/doc/task//rc/light-16.theme
 #include /opt/local/share/doc/task/rc/light-256.theme

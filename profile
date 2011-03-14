@@ -37,6 +37,13 @@ alias v="open -a MacVim"
 # task alias
 alias t="task"
 
+# fossil alias
+alias f="fossil"
+alias fs="fossil status"
+alias fss="fossil sync"
+alias fsas="fossil all sync"
+alias fsd="fossil diff"
+
 export PATH=$PATH:~/.gh-dotfiles/bin
 
 # set editor for gem open
