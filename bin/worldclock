@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# World Clock
+#
+# Federico Ramallo <framallo@gmail.com >
+# check for timezones /usr/share/zoneinfo/
+# Based on http://codesnippets.joyent.com/posts/show/83
+
+echo ''
+date                         $1 +"Local  : %H:%M %a %D %z"
+TZ=US/Pacific date           $1 +"Eric   : %H:%M %a %D %z"
+TZ=America/Buenos_Aires date $1 +"BS AS  : %H:%M %a %D %z"
+echo ''
+TZ=US/Pacific date           $1 +"Pacific: %H:%M %a %D %z"
+TZ=US/Central date           $1 +"Central: %H:%M %a %D %z"
+TZ=US/Eastern date           $1 +"Eastern: %H:%M %a %D %z"
+TZ=UTC date                  $1 +"UTC/GMT: %H:%M %a %D %z"
+
