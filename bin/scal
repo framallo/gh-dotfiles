@@ -4,6 +4,6 @@
 COL_NORM=$'\033[39m'
 COL_RED=$'\033[31m'
 
-cal | sed -E '1,$'"s/ ($(date +%e))( |$)/ $(echo $COL_RED)\1$(echo  $COL_NORM)\2/"
-echo $COL_RED `date "+%d %B %Y"` $COL_NORM
+cal | sed -E '1,$'"s/ ($(date +%e))( |$)/ $(printf $COL_RED)\1$(printf  $COL_NORM)\2/"
+echo $COL_RED`date "+%d %B %Y"` $COL_NORM 
 
