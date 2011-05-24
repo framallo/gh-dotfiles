@@ -1,13 +1,9 @@
 #!/bin/bash
 # shameless copy from
 # http://minimalmac.com/post/165067137/ever-since-i-became-a-full-time-mac-user-over-i
+COL_NORM=$'\033[39m'
+COL_RED=$'\033[31m'
 
-echo `date "+%d %B %Y"` | awk \
-  '{ print substr("          ",1,(21-length($0))/2) $0; }'; \
-  cal | awk '{ getline; print " Mo Tu We Th Fr Sa Su"; getline; \
-  if (substr($0,1,2) == " 1")  print "                    1 "; \
-  do { prevline=$0; if (getline == 0) exit; print " "\
-  substr(prevline,4,17) " " substr($0,1,2) " "; } while (1) }' | \
-  awk -v cday=`date "+%d"` '{ fill=(int(cday)>9?"":" ");    \
-   a=$0; sub(" "fill int(cday)" ","*"fill int(cday)"*",a); print  a }'\
+cal | sed -E '1,$'"s/ ($(date +%e))( |$)/ $(echo $COL_RED)\1$(echo  $COL_NORM)\2/"
+echo $COL_RED `date "+%d %B %Y"` $COL_NORM
 
