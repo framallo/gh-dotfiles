@@ -1,0 +1,96 @@
+#!/bin/bash
+
+TC_BIN=/Applications/TrueCrypt.app/Contents/MacOS/TrueCrypt
+VOLUME=
+MOUNT=/Volumes/backup
+UNSAFE_MOUNT=/Volumes/big/framallo
+KEYFILE=
+KEYFILEOP=
+DRY=
+VERBOSE=
+ENC_EXCLUDE_FROM=~/.backuper/encrypted
+
+usage()
+{
+cat << EOF
+usage: Backuper options
+
+Backuper backs up everything on an encrypted  volume
+
+OPTIONS:
+   -h      Show this message
+   -v      TrueCrypt Encrypted Volume (Required)
+   -k      key file (Default: $KEYFILE)
+   -m      TrueCrypt Encrypted Volume mount point (Default: $MOUNT)
+   -K      Keep volume mounted
+   -n      Dry run 
+   -V      Verbose
+
+Example:
+  backuper -v /my/volume
+EOF
+}
+
+# Takes two arguments
+# $0 the nice message to show
+# $1 the command to run
+brun()
+{
+  if [[ -n $1 ]]; then         
+    echo "* $1:"
+  fi
+  if [[ -n $VERBOSE ]] || [[ -z $DRY ]]; then 
+    echo $2
+  fi
+  if [[ -z $DRY ]]; then
+    eval $2
+  fi
+}
+while getopts "hv:k:mKnVe:E:" OPTION
+do
+  case $OPTION in
+    h) 
+      usage
+      exit 1
+      ;;
+    v)
+      VOLUME=$OPTARG
+      ;;
+    k)
+      KEYFILE="$OPTARG"
+      KEYFILEOP="-k $KEYFILE"
+      ;;
+    m)
+      MOUNT=$OPTARG
+      ;;
+    K)
+      KEEP_MOUNT=true
+      ;;
+    n)
+      DRY=true
+      ;;
+    V)
+      VERBOSE=true
+      ;;
+  esac
+done
+
+if [[ -z $VOLUME ]];
+then
+    echo "Missing required parameter"
+     usage
+     exit 1
+fi
+
+brun "Mounting Volume" "mkdir -p $MOUNT"
+brun "" "$TC_BIN $VOLUME $MOUNT $KEYFILEOP"
+
+brun "Sync to encrypted volume"  "rsync -X -aP --delete --exclude-from=$ENC_EXCLUDE_FROM $HOME $MOUNT/backup/"
+brun "Sync Music"  "rsync -X -aP $HOME/Music $UNSAFE_MOUNT/Music/"
+brun "Sync Movies" "rsync -X -aP $HOME/Movies $UNSAFE_MOUNT/Movies/"
+
+if [[ -z $KEEP_MOUNT ]] && [ -d $MOUNT ];
+then
+  brun "Dismount Volume" "$TC_BIN -d $VOLUME"
+  brun "rm $MOUNT"
+fi
