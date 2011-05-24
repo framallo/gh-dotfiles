@@ -1,6 +1,5 @@
 #!/bin/bash
-# shameless copy from
-# http://minimalmac.com/post/165067137/ever-since-i-became-a-full-time-mac-user-over-i
+
 COL_NORM=$'\033[39m'
 COL_RED=$'\033[31m'
 
