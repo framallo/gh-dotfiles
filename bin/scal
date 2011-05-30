@@ -3,6 +3,7 @@
 COL_NORM=$'\033[39m'
 COL_RED=$'\033[31m'
 
+# show current month
 cal | sed -E '1,$'"s/ ($(date +%e))( |$)/ $(printf $COL_RED)\1$(printf  $COL_NORM)\2/"
-echo $COL_RED`date "+%d %B %Y"` $COL_NORM 
-
+# show next month
+cal -m $((`date +%m`+1))
