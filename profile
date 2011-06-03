@@ -5,8 +5,10 @@ set completion-query-items 350
 # create big history file 
 unset HISTFILESIZE
 export HISTSIZE=10000
-export PROMPT_COMMAND="history -a"
-export HISTSIZE PROMPT_COMMAND
+
+# Now bash writes and re-reads the history file every time it prints a new prompt for you.
+export PROMPT_COMMAND="history -a; history -n; ${PROMPT_COMMAND}"
+
 shopt -s histappend
 # don't put duplicate lines in the history. 
 export HISTCONTROL=ignoredups 
