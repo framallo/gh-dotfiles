@@ -7,7 +7,7 @@ unset HISTFILESIZE
 export HISTSIZE=10000
 
 # Now bash writes and re-reads the history file every time it prints a new prompt for you.
-export PROMPT_COMMAND="history -a; history -n; ${PROMPT_COMMAND}"
+export PROMPT_COMMAND="history -a; ${PROMPT_COMMAND}"
 
 shopt -s histappend
 # don't put duplicate lines in the history. 
@@ -50,3 +50,7 @@ export PATH=$PATH:~/.gh-dotfiles/bin
 
 # set editor for gem open
 export EDITOR=vim
+
+export CLICOLOR=1
+export LSCOLORS=ExFxCxDxBxegedabagacad
+
