@@ -1,0 +1,7 @@
+#!/bin/bash
+
+rsync -aP --remove-source-files framallo@ts-mini.local:"/Volumes/NO\ NAME/DCIM/" ~/Pictures/DCIM
+rsync -aP --remove-source-files framallo@ts-mini.local:"/Volumes/NO\ NAME/PRIVATE/AVCHD/BDMV/STREAM/" ~/Pictures/STREAM
+
+ 
+
