@@ -1,0 +1,7 @@
+#!/bin/bash
+
+rsync -X -aP ~ /Volumes/mirror/Users/ --exclude-from=/Users/framallo/.gh-dotfiles/conf/big_backup_excludes --delete-before
+
+# Syncing music
+rsync -X -aP ~/Music/sorted /Volumes/big/Music/
+
