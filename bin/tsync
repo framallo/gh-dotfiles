@@ -1,9 +1,6 @@
 #!/bin/bash
 
-TASKS_RC=$HOME/.gh-dotfiles/etc/.taskrc
 TASKS_BASE=$HOME/.gh-dotfiles
-
-task rc:$TASKS_RC $*
 
 touch -d '-1 hour' $TASKS_BASE/limit
 if [ limit -nt $TASKS_BASE/last_sync ]; then
@@ -11,4 +8,5 @@ if [ limit -nt $TASKS_BASE/last_sync ]; then
     #send notification...
     touch $TASKS_BASE/last_sync
 fi
+
 
