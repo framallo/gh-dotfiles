@@ -1,0 +1,139 @@
+#!/usr/bin/env bash
+
+set -e
+
+usage()
+{
+cat << EOF
+sync_media version 1.0
+
+sync_media allows you to quickly download from your camera and other devices and clear the storage.
+So this tool allows you to sync from multiple origins to multiple destinations.
+
+Process:
+- sync from origins to to Destination 1.
+- unmount origins
+- sync from Destination 1 to Destination 2.
+
+If Origin 1 or Destination 2 is not available we skip them
+
+
+Usually your origins are:
+- SD cards
+- DVR
+And your destinations can be:
+- Local HD
+- External HD
+
+OPTIONS:
+  -a      Origin 1 (required)
+  -b      Origin 2
+  -c      Origin 3
+
+  -j      Destination 1 (required)
+  -k      Destination 2
+
+  -A      mount point origin 1
+  -B      mount point origin 2
+  -C      mount point origin 3
+
+  -J      Move files from Destination 1 to Destination 2
+  -K      mount point destination 2
+
+  -n      Dry run 
+  -V      Verbose
+
+Example:
+  sync_media -a <path> -j <path> 
+
+EOF
+}
+
+# An exec wrapper that allows to echo the command and dry run.
+# That way we can only echo commands and debug easily
+#
+# Takes two arguments
+# $0 the nice message to show
+# $1 the command to run
+#
+brun()
+{
+  if [[ -n $1 ]]; then         
+    echo "* $1:"
+  fi
+  if [[ -n $VERBOSE ]] || [[ -z $DRY ]]; then 
+    echo $2
+  fi
+  if [[ -z $DRY ]]; then
+    eval $2
+  fi
+}
+
+while getopts "a:b:c:d:e:f:g:hnV" OPTION
+do
+  case $OPTION in
+    h) usage ; exit 1 ;;
+    a) a=$OPTARG ;;
+    b) b=$OPTARG ;;
+    c) c=$OPTARG ;;
+    j) j=$OPTARG ;;
+    k) k=$OPTARG ;;
+    A) A=$OPTARG ;;
+    B) B=$OPTARG ;;
+    C) C=$OPTARG ;;
+    J) J=$OPTARG ;;
+    K) K=$OPTARG ;;
+    m) m=$OPTARG ;;
+    n) DRY=true ;;
+    V) VERBOSE=true ;;
+esac
+done
+
+# requires $A and $C
+if [[ -z $A ]] || [[ -z $C ]]; then
+  echo "ERROR: Missing required parameters"
+  echo ""
+  usage
+  exit 1
+fi
+
+# validate $A
+if [[ ! -d $A ]] && [[ ! -d $B ]]; then
+  echo "ERROR: Can't reach any origin"
+  echo ""
+  exit 1
+fi
+
+#brun "Mounting Volume" "mkdir -p $MOUNT"
+#brun "" "$TC_BIN $VOLUME $MOUNT $KEYFILEOP"
+
+if [[ -d $a ]]; then
+  brun "Sync from $a to $j"  "rsync -X -aP $a $j"
+  brun "unmounting $A"  "umount $A"
+else
+  echo "WARNING: Skipping $a"
+fi
+
+if [[ -d $b ]]; then
+  brun "Sync from $b to $j"  "rsync -X -aP $b $j"
+  brun "unmounting $B"  "umount $B"
+else
+  echo "WARNING: Skipping $b"
+fi
+
+if [[ -d $c ]]; then
+  brun "Sync from $c to $j"  "rsync -X -aP $c $j"
+  brun "unmounting $J"  "umount $J"
+else
+  echo "WARNING: Skipping $c"
+fi
+
+if [[ -d $k ]]; then
+  brun "Sync from $j to $k"  "rsync -X -aP $j $k"
+  brun "unmounting $K"  "umount $K"
+else
+  echo "WARNING: Skipping $k"
+fi
+
+echo "Done!"
+
