@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+set -i
 
 usage()
 {
@@ -25,26 +26,31 @@ And your destinations can be:
 - Local HD
 - External HD
 
+CONFIG FILE:
+
+You need to set up a config file located by default in ~/.sync_mediarc
+
+CONFIG FILE EXAMPLE:
+
+  ORIGIN_NAME[1]="SD card"
+  ORIGIN_PATH[1]="/Volumes/SD  Card/DCIM/"
+  ORIGIN_SORT[1]="yes"
+  ORIGIN_DFMT[1]="%Y-%m-%d/%%f.%%e"
+
+  DEST_NAME[3]="HD"
+  DEST_PATH[3]="$HOME/media/"
+
+
+
 OPTIONS:
-  -a      Origin 1 (required)
-  -b      Origin 2
-  -c      Origin 3
-
-  -j      Destination 1 (required)
-  -k      Destination 2
-
-  -A      mount point origin 1
-  -B      mount point origin 2
-  -C      mount point origin 3
-
-  -J      Move files from Destination 1 to Destination 2
-  -K      mount point destination 2
-
+  -h      help
+  -c      config file path
+  -m      Move files from Destination 1 to Destination 2
   -n      Dry run 
   -V      Verbose
 
 Example:
-  sync_media -a <path> -j <path> 
+  sync_media 
 
 EOF
 }
@@ -63,77 +69,134 @@ brun()
   fi
   if [[ -n $VERBOSE ]] || [[ -z $DRY ]]; then 
     echo $2
+    echo ""
   fi
   if [[ -z $DRY ]]; then
     eval $2
   fi
 }
 
-while getopts "a:b:c:d:e:f:g:hnV" OPTION
-do
-  case $OPTION in
-    h) usage ; exit 1 ;;
-    a) a=$OPTARG ;;
-    b) b=$OPTARG ;;
-    c) c=$OPTARG ;;
-    j) j=$OPTARG ;;
-    k) k=$OPTARG ;;
-    A) A=$OPTARG ;;
-    B) B=$OPTARG ;;
-    C) C=$OPTARG ;;
-    J) J=$OPTARG ;;
-    K) K=$OPTARG ;;
-    m) m=$OPTARG ;;
-    n) DRY=true ;;
-    V) VERBOSE=true ;;
-esac
-done
+validate_config_file(){
+  if [[ ! -e $c ]]; then
+    echo "ERROR: config file missing!"
+    exit 1
+  fi
+}
 
-# requires $A and $C
-if [[ -z $A ]] || [[ -z $C ]]; then
-  echo "ERROR: Missing required parameters"
-  echo ""
-  usage
-  exit 1
-fi
+read_config() {
+  validate_config_file
+  source $c
+  export ORIGIN_NAME
+}
 
-# validate $A
-if [[ ! -d $A ]] && [[ ! -d $B ]]; then
-  echo "ERROR: Can't reach any origin"
-  echo ""
-  exit 1
-fi
+read_params(){
 
-#brun "Mounting Volume" "mkdir -p $MOUNT"
-#brun "" "$TC_BIN $VOLUME $MOUNT $KEYFILEOP"
+  while getopts "hc:mnV" OPTION
+  do
+    case $OPTION in
+      h) usage ; exit 1 ;;
+      c) c=$OPTARG ;;
+      m) m=true ;;
+      n) DRY=true ;;
+      V) VERBOSE=true ;;
+  esac
+  done
+}
 
-if [[ -d $a ]]; then
-  brun "Sync from $a to $j"  "rsync -X -aP $a $j"
-  brun "unmounting $A"  "umount $A"
-else
-  echo "WARNING: Skipping $a"
-fi
+read_default_params(){
+  export c=${c:-$HOME/.sync_media}
+}
 
-if [[ -d $b ]]; then
-  brun "Sync from $b to $j"  "rsync -X -aP $b $j"
-  brun "unmounting $B"  "umount $B"
-else
-  echo "WARNING: Skipping $b"
-fi
+run_origins(){
+  counter=1
+  while [[ -n ${ORIGIN_NAME[$counter]} ]];
+  do
+    run_origin $counter
+    counter=$(( $counter +1 ))
+  done
+}
 
-if [[ -d $c ]]; then
-  brun "Sync from $c to $j"  "rsync -X -aP $c $j"
-  brun "unmounting $J"  "umount $J"
-else
-  echo "WARNING: Skipping $c"
-fi
+run_origin(){
+  NAME=${ORIGIN_NAME[$1]}
+  PATH=${ORIGIN_PATH[$1]}
+  MOUNT=${MOUNT_POINT[$1]}
+  DEST_NAME=${DEST_NAME[$2]}
+  DEST_PATH=${DEST_PATH[$2]}
 
-if [[ -d $k ]]; then
-  brun "Sync from $j to $k"  "rsync -X -aP $j $k"
-  brun "unmounting $K"  "umount $K"
-else
-  echo "WARNING: Skipping $k"
-fi
+  if [[ -d $PATH ]]; then
+    brun "Sync from $PATH to $DEST_PATH"  "rsync -X -aP $PATH $DEST_PATH/$NAME"
+    if [[ -n $MOUNT ]]; then
+      brun "unmounting $MOUNT"  "umount $MOUNT"
+    fi
+  else
+    echo "WARNING: Skipping $PATH"
+  fi
+}
 
-echo "Done!"
 
+declare -a -x ORIGIN_NAME
+declare -a -x ORIGIN_PATH
+declare -a -x MOUNT_POINT
+declare -a -x DEST_NAME
+declare -a -x DEST_PATH
+declare -x c
+declare -x m
+declare -x DRY
+declare -x VERBOSE
+
+read_params "${@}"
+read_default_params
+read_config
+run_origins
+
+
+
+garbage() {
+
+
+
+  # requires $A and $C
+  if [[ -z $A ]] || [[ -z $C ]]; then
+    echo "ERROR: Missing required parameters"
+    echo ""
+    usage
+    exit 1
+  fi
+
+  # validate $A
+  if [[ ! -d $A ]] && [[ ! -d $B ]]; then
+    echo "ERROR: Can't reach any origin"
+    echo ""
+    exit 1
+  fi
+
+  #brun "Mounting Volume" "mkdir -p $MOUNT"
+  #brun "" "$TC_BIN $VOLUME $MOUNT $KEYFILEOP"
+
+
+  if [[ -d $b ]]; then
+    brun "Sync from $b to $j"  "rsync -X -aP $b $j"
+    brun "unmounting $B"  "umount $B"
+  else
+    echo "WARNING: Skipping $b"
+  fi
+
+  if [[ -d $c ]]; then
+    brun "Sync from $c to $j"  "rsync -X -aP $c $j"
+    brun "unmounting $J"  "umount $J"
+  else
+    echo "WARNING: Skipping $c"
+  fi
+
+  if [[ -d $k ]]; then
+    brun "Sync from $j to $k"  "rsync -X -aP $j $k"
+    brun "unmounting $K"  "umount $K"
+  else
+    echo "WARNING: Skipping $k"
+  fi
+
+  echo "Done!"
+
+  exiftool -r -d %Y-%m-%d/%%f.%%e -o /Volumes/SD\ \ Card/DCIM/ "-filename<filemodifydate" /Volumes/SD\ \ Card/DCIM/ 
+
+}
