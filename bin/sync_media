@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-set -e
-set -i
+#set -e
+#set -i
 
 usage()
 {
@@ -107,35 +107,60 @@ read_default_params(){
   export c=${c:-$HOME/.sync_media}
 }
 
-run_origins(){
-  counter=1
+origins(){
+  counter=0
   while [[ -n ${ORIGIN_NAME[$counter]} ]];
   do
-    run_origin $counter
+
+    local origin_name=${ORIGIN_NAME[$counter]}
+    local origin_path=${ORIGIN_PATH[$counter]}
+    local mount_point=${MOUNT_POINT[$counter]}
+    local origin_dfmt=${ORIGIN_DFMT[$counter]}
+    local origin_sort=${ORIGIN_SORT[$counter]}
+
+    local dest_name=${DEST_NAME[0]}
+    local dest_path=${DEST_PATH[0]}
+
+    if [[ -d $origin_path ]]; then
+      if [[ -n $origin_sort ]]; then
+        origin_sort
+      fi
+      origin_sync
+      if [[ -n $mount_point ]]; then
+        origin_unmount
+      fi
+    else
+      echo "WARNING: Skipping $origin_path"
+    fi
+
     counter=$(( $counter +1 ))
   done
 }
 
-run_origin(){
-  NAME=${ORIGIN_NAME[$1]}
-  PATH=${ORIGIN_PATH[$1]}
-  MOUNT=${MOUNT_POINT[$1]}
-  DEST_NAME=${DEST_NAME[$2]}
-  DEST_PATH=${DEST_PATH[$2]}
-
-  if [[ -d $PATH ]]; then
-    brun "Sync from $PATH to $DEST_PATH"  "rsync -X -aP $PATH $DEST_PATH/$NAME"
-    if [[ -n $MOUNT ]]; then
-      brun "unmounting $MOUNT"  "umount $MOUNT"
-    fi
-  else
-    echo "WARNING: Skipping $PATH"
+origin_sync(){
+  a=$origin_path
+  b=$origin_path
+  c=$dest_path$origin_name
+  if [[ ! -d $c ]]; then 
+    brun "creating destination dirs" "mkdir -p $c"
   fi
+  brun "Sync from $a to $b"  "rsync -X -aP \"$b\" \"$c\""
 }
 
+origin_unmount(){
+  brun "unmounting $mount_point"  "umount $mount_point"
+}
+
+origin_sort(){
+  local a=$origin_path$origin_dfmt
+  local b=$origin_path
+  brun "Sorting files with exiftool" "exiftool -r -d \"$a\" \"-filename<filemodifydate\" \"$b\" "
+}
 
 declare -a -x ORIGIN_NAME
 declare -a -x ORIGIN_PATH
+declare -a -x ORIGIN_SORT
+declare -a -x ORIGIN_DFMT
 declare -a -x MOUNT_POINT
 declare -a -x DEST_NAME
 declare -a -x DEST_PATH
@@ -147,7 +172,7 @@ declare -x VERBOSE
 read_params "${@}"
 read_default_params
 read_config
-run_origins
+origins
 
 
 
