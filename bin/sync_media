@@ -121,14 +121,18 @@ origins(){
     local dest_name=${DEST_NAME[0]}
     local dest_path=${DEST_PATH[0]}
 
+    local dest_name1=${DEST_NAME[1]}
+    local dest_path1=${DEST_PATH[1]}
+
     if [[ -d $origin_path ]]; then
       if [[ -n $origin_sort ]]; then
         origin_sort
       fi
-      origin_sync
+      media_sync $origin_path $dest_path$origin_name
       if [[ -n $mount_point ]]; then
         origin_unmount
       fi
+      destination_sync
     else
       echo "WARNING: Skipping $origin_path"
     fi
@@ -137,14 +141,11 @@ origins(){
   done
 }
 
-origin_sync(){
-  a=$origin_path
-  b=$origin_path
-  c=$dest_path$origin_name
-  if [[ ! -d $c ]]; then 
-    brun "creating destination dirs" "mkdir -p $c"
+media_sync(){
+  if [[ ! -d $2 ]]; then 
+    brun "creating destination dirs" "mkdir -p $2"
   fi
-  brun "Sync from $a to $b"  "rsync -X -aP \"$b\" \"$c\""
+  brun "Sync from $1 to $2"  "rsync -X -aP \"$1\" \"$2\""
 }
 
 origin_unmount(){
@@ -155,6 +156,12 @@ origin_sort(){
   local a=$origin_path$origin_dfmt
   local b=$origin_path
   brun "Sorting files with exiftool" "exiftool -r -d \"$a\" \"-filename<filemodifydate\" \"$b\" "
+}
+
+destination_sync(){
+  if [[ -d $dest_path1 ]]; then
+    media_sync $dest_path $dest_path1
+  fi
 }
 
 declare -a -x ORIGIN_NAME
