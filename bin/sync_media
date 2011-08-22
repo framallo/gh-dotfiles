@@ -1,0 +1,234 @@
+#!/usr/bin/env bash
+
+set -e
+set -i
+
+usage()
+{
+cat << EOF
+sync_media version 1.0
+
+sync_media allows you to quickly download from your camera and other devices and clear the storage.
+So this tool allows you to sync from multiple origins to multiple destinations.
+
+Process:
+- sync from origins to to Destination 1.
+- unmount origins
+- sync from Destination 1 to Destination 2.
+
+If Origin 1 or Destination 2 is not available we skip them
+
+
+Usually your origins are:
+- SD cards
+- DVR
+And your destinations can be:
+- Local HD
+- External HD
+
+CONFIG FILE:
+
+You need to set up a config file located by default in ~/.sync_mediarc
+
+CONFIG FILE EXAMPLE:
+
+  ORIGIN_NAME[1]="SD card"
+  ORIGIN_PATH[1]="/Volumes/SD  Card/DCIM/"
+  ORIGIN_SORT[1]="yes"
+  ORIGIN_DFMT[1]="%Y-%m-%d/%%f.%%e"
+
+  DEST_NAME[3]="HD"
+  DEST_PATH[3]="$HOME/media/"
+
+
+
+OPTIONS:
+  -h      help
+  -c      config file path
+  -m      Move files from Destination 1 to Destination 2
+  -n      Dry run 
+  -V      Verbose
+
+Example:
+  sync_media 
+
+EOF
+}
+
+# An exec wrapper that allows to echo the command and dry run.
+# That way we can only echo commands and debug easily
+#
+# Takes two arguments
+# $0 the nice message to show
+# $1 the command to run
+#
+brun()
+{
+  if [[ -n $1 ]]; then         
+    echo "* $1:"
+  fi
+  if [[ -n $VERBOSE ]] || [[ -z $DRY ]]; then 
+    echo $2
+    echo ""
+  fi
+  if [[ -z $DRY ]]; then
+    eval $2
+  fi
+}
+
+validate_config_file(){
+  if [[ ! -e $c ]]; then
+    echo "ERROR: config file missing!"
+    exit 1
+  fi
+}
+
+read_config() {
+  validate_config_file
+  source $c
+  export ORIGIN_NAME
+}
+
+read_params(){
+
+  while getopts "hc:mnV" OPTION
+  do
+    case $OPTION in
+      h) usage ; exit 1 ;;
+      c) c=$OPTARG ;;
+      m) m=true ;;
+      n) DRY=true ;;
+      V) VERBOSE=true ;;
+  esac
+  done
+}
+
+read_default_params(){
+  export c=${c:-$HOME/.sync_media}
+}
+
+origins(){
+  counter=0
+  while [[ -n ${ORIGIN_NAME[$counter]} ]];
+  do
+
+    local origin_name=${ORIGIN_NAME[$counter]}
+    local origin_path=${ORIGIN_PATH[$counter]}
+    local mount_point=${MOUNT_POINT[$counter]}
+    local origin_dfmt=${ORIGIN_DFMT[$counter]}
+    local origin_sort=${ORIGIN_SORT[$counter]}
+
+    local dest_name=${DEST_NAME[0]}
+    local dest_path=${DEST_PATH[0]}
+
+    local dest_name1=${DEST_NAME[1]}
+    local dest_path1=${DEST_PATH[1]}
+
+    if [[ -d $origin_path ]]; then
+      if [[ -n $origin_sort ]]; then
+        origin_sort
+      fi
+      media_sync $origin_path $dest_path$origin_name "--remove-source-files"
+      if [[ -n $mount_point ]]; then
+        origin_unmount
+      fi
+      destination_sync
+    else
+      echo "WARNING: Skipping $origin_path"
+    fi
+
+    counter=$(( $counter +1 ))
+  done
+}
+
+media_sync(){
+  if [[ ! -d $2 ]]; then 
+    brun "creating destination dirs" "mkdir -p $2"
+  fi
+  brun "Sync from $1 to $2"  "rsync -X -aP \"$1\" \"$2\" $3"
+}
+
+origin_unmount(){
+  brun "unmounting $mount_point"  "umount $mount_point"
+}
+
+origin_sort(){
+  local a=$origin_path$origin_dfmt
+  local b=$origin_path
+  brun "Sorting files with exiftool" "exiftool -r -d \"$a\" \"-filename<filemodifydate\" \"$b\" "
+}
+
+destination_sync(){
+  if [[ -d $dest_path1 ]]; then
+    media_sync $dest_path $dest_path1 "--remove-source-files"
+  fi
+}
+
+declare -a -x ORIGIN_NAME
+declare -a -x ORIGIN_PATH
+declare -a -x ORIGIN_SORT
+declare -a -x ORIGIN_DFMT
+declare -a -x MOUNT_POINT
+declare -a -x DEST_NAME
+declare -a -x DEST_PATH
+declare -x c
+declare -x m
+declare -x DRY
+declare -x VERBOSE
+
+read_params "${@}"
+read_default_params
+read_config
+origins
+
+
+
+garbage() {
+
+
+
+  # requires $A and $C
+  if [[ -z $A ]] || [[ -z $C ]]; then
+    echo "ERROR: Missing required parameters"
+    echo ""
+    usage
+    exit 1
+  fi
+
+  # validate $A
+  if [[ ! -d $A ]] && [[ ! -d $B ]]; then
+    echo "ERROR: Can't reach any origin"
+    echo ""
+    exit 1
+  fi
+
+  #brun "Mounting Volume" "mkdir -p $MOUNT"
+  #brun "" "$TC_BIN $VOLUME $MOUNT $KEYFILEOP"
+
+
+  if [[ -d $b ]]; then
+    brun "Sync from $b to $j"  "rsync -X -aP $b $j"
+    brun "unmounting $B"  "umount $B"
+  else
+    echo "WARNING: Skipping $b"
+  fi
+
+  if [[ -d $c ]]; then
+    brun "Sync from $c to $j"  "rsync -X -aP $c $j"
+    brun "unmounting $J"  "umount $J"
+  else
+    echo "WARNING: Skipping $c"
+  fi
+
+  if [[ -d $k ]]; then
+    brun "Sync from $j to $k"  "rsync -X -aP $j $k"
+    brun "unmounting $K"  "umount $K"
+  else
+    echo "WARNING: Skipping $k"
+  fi
+
+  echo "Done!"
+
+  exiftool -r -d %Y-%m-%d/%%f.%%e -o /Volumes/SD\ \ Card/DCIM/ "-filename<filemodifydate" /Volumes/SD\ \ Card/DCIM/ 
+
+}
