@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 TC_BIN=/Applications/TrueCrypt.app/Contents/MacOS/TrueCrypt
 VOLUME=
