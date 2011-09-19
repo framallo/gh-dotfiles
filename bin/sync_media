@@ -109,6 +109,10 @@ read_default_params(){
 
 origins(){
   counter=0
+
+  local dest_name=${DEST_NAME[0]}
+  local dest_path=${DEST_PATH[0]}
+
   while [[ -n ${ORIGIN_NAME[$counter]} ]];
   do
 
@@ -118,11 +122,6 @@ origins(){
     local origin_dfmt=${ORIGIN_DFMT[$counter]}
     local origin_sort=${ORIGIN_SORT[$counter]}
 
-    local dest_name=${DEST_NAME[0]}
-    local dest_path=${DEST_PATH[0]}
-
-    local dest_name1=${DEST_NAME[1]}
-    local dest_path1=${DEST_PATH[1]}
 
     if [[ -d $origin_path ]]; then
       if [[ -n $origin_sort ]]; then
@@ -132,13 +131,14 @@ origins(){
       if [[ -n $mount_point ]]; then
         origin_unmount
       fi
-      destination_sync
     else
       echo "WARNING: Skipping $origin_path"
     fi
 
     counter=$(( $counter +1 ))
   done
+echo $DEST_PATH[1]
+  destination_sync ${DEST_PATH[0]} ${DEST_PATH[1]}
 }
 
 media_sync(){
@@ -159,8 +159,8 @@ origin_sort(){
 }
 
 destination_sync(){
-  if [[ -d $dest_path1 ]]; then
-    media_sync $dest_path $dest_path1 "--remove-source-files"
+  if [[ -d $2 ]]; then
+    media_sync $1 $2 "--remove-source-files"
   fi
 }
 
@@ -180,55 +180,3 @@ read_params "${@}"
 read_default_params
 read_config
 origins
-
-
-
-garbage() {
-
-
-
-  # requires $A and $C
-  if [[ -z $A ]] || [[ -z $C ]]; then
-    echo "ERROR: Missing required parameters"
-    echo ""
-    usage
-    exit 1
-  fi
-
-  # validate $A
-  if [[ ! -d $A ]] && [[ ! -d $B ]]; then
-    echo "ERROR: Can't reach any origin"
-    echo ""
-    exit 1
-  fi
-
-  #brun "Mounting Volume" "mkdir -p $MOUNT"
-  #brun "" "$TC_BIN $VOLUME $MOUNT $KEYFILEOP"
-
-
-  if [[ -d $b ]]; then
-    brun "Sync from $b to $j"  "rsync -X -aP $b $j"
-    brun "unmounting $B"  "umount $B"
-  else
-    echo "WARNING: Skipping $b"
-  fi
-
-  if [[ -d $c ]]; then
-    brun "Sync from $c to $j"  "rsync -X -aP $c $j"
-    brun "unmounting $J"  "umount $J"
-  else
-    echo "WARNING: Skipping $c"
-  fi
-
-  if [[ -d $k ]]; then
-    brun "Sync from $j to $k"  "rsync -X -aP $j $k"
-    brun "unmounting $K"  "umount $K"
-  else
-    echo "WARNING: Skipping $k"
-  fi
-
-  echo "Done!"
-
-  exiftool -r -d %Y-%m-%d/%%f.%%e -o /Volumes/SD\ \ Card/DCIM/ "-filename<filemodifydate" /Volumes/SD\ \ Card/DCIM/ 
-
-}

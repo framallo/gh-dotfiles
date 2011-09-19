@@ -18,9 +18,10 @@ export HISTCONTROL=ignoreboth
 
 # GIT ------------------------------------
 # show current branch on shell
-export PS1='\[\033[1;33m\]\w\[\033[0m\]$ '
 source ~/.gh-dotfiles/bash_git
 source ~/.gh-dotfiles/task_completion.sh
+
+export PS1='${debian_chroot:+($debian_chroot)}\u@\h:\[\033[1;33m\]\w\[\033[0m\] \n\$ '
 
 # add short cut keys for terminal app
 # Ctrl left   right word
