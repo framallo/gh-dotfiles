@@ -1,3 +1,0 @@
-#!/bin/sh
-git config --global user.name "eduarbo"
-git config --global user.email "eduarbo@tangosource.com"

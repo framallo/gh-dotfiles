@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+set -e
+set -i
+
+usage()
+{
+cat << EOF
+pairing version 1.0
+
+pairing tool allows you to change the name of git user name and email.
+
+Example:
+  pairing "Federico Ramallo + Marco Gallardo" framallo+marco@tangosource.com
+
+EOF
+}
+
+# An exec wrapper that allows to echo the command and dry run.
+# That way we can only echo commands and debug easily
+#
+# Takes two arguments
+# $0 the nice message to show
+# $1 the command to run
+#
+brun()
+{
+  if [[ -n $1 ]]; then         
+    echo "* $1:"
+  fi
+  if [[ -n $VERBOSE ]] || [[ -z $DRY ]]; then 
+    echo $2
+    echo ""
+  fi
+  if [[ -z $DRY ]]; then
+    eval $2
+  fi
+}
+
+read_params(){
+
+  USER_NAME="$1"
+  USER_EMAIL="$2"
+
+}
+
+status(){
+  echo 'user.name:' `git config --global user.name`
+  echo 'user.email:' `git config --global user.email`
+}
+
+main(){
+  if [[ -n $USER_NAME ]] && [[ -n $USER_EMAIL ]]; then
+    git config --global user.name  "$USER_NAME"
+    git config --global user.email "$USER_EMAIL"
+  fi
+}
+
+declare -a -x USER_NAME
+declare -a -x USER_EMAIL
+
+read_params "${@}"
+status
+main
