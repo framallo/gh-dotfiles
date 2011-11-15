@@ -46,7 +46,8 @@ brun()
     eval $2
   fi
 }
-while getopts "hv:k:mKnVe:E:" OPTION
+
+while getopts "hv:k:m:KnVe:E:" OPTION
 do
   case $OPTION in
     h) 
@@ -61,7 +62,7 @@ do
       KEYFILEOP="-k $KEYFILE"
       ;;
     m)
-      MOUNT=$OPTARG
+      MOUNT="$OPTARG"
       ;;
     K)
       KEEP_MOUNT=true
