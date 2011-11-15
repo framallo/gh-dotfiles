@@ -124,6 +124,7 @@ origins(){
 
 
     if [[ -d $origin_path ]]; then
+      echo "## Syncing source $origin_name"
       if [[ -n $origin_sort ]]; then
         origin_sort
       fi
@@ -149,7 +150,7 @@ media_sync(){
 }
 
 origin_unmount(){
-  brun "unmounting $mount_point"  "umount $mount_point"
+  brun "unmounting $mount_point"  "$CMD_UMOUNT $mount_point"
 }
 
 origin_sort(){
@@ -171,6 +172,7 @@ declare -a -x ORIGIN_DFMT
 declare -a -x MOUNT_POINT
 declare -a -x DEST_NAME
 declare -a -x DEST_PATH
+declare -a -x CMD_UMOUNT
 declare -x c
 declare -x m
 declare -x DRY
