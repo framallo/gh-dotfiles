@@ -54,6 +54,109 @@ Example:
 
 EOF
 }
+# MAIN PROGRAM ##########################################
+
+main() {
+  sm_skipping
+  sm_all1
+  sm_all2
+  destination1_sync
+}
+
+
+
+sm_skipping(){
+  counter=0
+  while [[ -n ${ORIGIN_NAME[$counter]} ]];
+  do
+    if [[ ! -d ${ORIGIN_PATH[$counter]} ]]; then
+      echo "WARNING: Skipping ${ORIGIN_PATH[$counter]}"
+    fi
+    counter+=1
+  done
+}
+
+sm_all1(){
+  echo "# Syncing sources #"
+  counter=0
+  while [[ -n ${ORIGIN_NAME[$counter]} ]];
+  do
+    if [[ -d ${ORIGIN_PATH[$counter]} ]]; then 
+      sm_each1 $counter
+    fi
+    counter+=1
+  done
+}
+
+sm_all2(){
+  echo "# Sorting #"
+  counter=0
+  while [[ -n ${ORIGIN_NAME[$counter]} ]];
+  do
+    sm_each2 $counter
+    counter+=1
+  done
+}
+
+# download and unmount each origin
+# params:
+# 1 counter
+sm_each1(){
+  sm_to_stage $1 #sync from origin to stage
+
+  if [[ -n ${MOUNT_POINT[$1]} ]]; then
+    sm_unmount $1
+  fi
+}
+
+sm_each2(){ 
+  if [[ -n ${ORIGIN_SORT[$1]} ]]; then
+    sm_sort_stage $1 
+  fi
+  sm_to_destination $1
+}
+
+# sort on stage
+sm_to_stage() { 
+  media_sync ${ORIGIN_PATH[$1]} ${DEST_PATH[0]}${ORIGIN_NAME[$1]}/stage "--remove-source-files" 
+}
+
+sm_sort_stage(){
+  local o=${DEST_PATH[0]}${ORIGIN_NAME[$1]}/stage/
+  sm_mkdir $o
+  brun "Sorting files with exiftool" "exiftool -r -d \"$o${ORIGIN_DFMT[$1]}\" \"-filename<filemodifydate\" \"$o\" "
+}
+
+sm_to_destination(){
+  media_sync ${DEST_PATH[0]}${ORIGIN_NAME[$1]}/stage/ ${DEST_PATH[0]}${ORIGIN_NAME[$1]} "--remove-source-files --prune-empty-dirs"
+}
+
+sm_unmount(){ 
+  brun "unmounting ${MOUNT_POINT[$1]}"  "$CMD_UMOUNT ${MOUNT_POINT[$1]}" 
+}
+
+media_sync(){
+  sm_mkdir $2
+  brun "Sync from $1 to $2"  "rsync -X -aP \"$1\" \"$2\" $3"
+}
+
+sm_mkdir() {
+  if [[ ! -d $1 ]]; then 
+    brun "creating destination dirs" "mkdir -p $1"
+  fi
+}
+
+
+destination1_sync(){
+  echo "# Syncing destination #"
+  if [[ -d ${DEST_PATH[1]} ]]; then
+    media_sync ${DEST_PATH[0]} ${DEST_PATH[1]} "--remove-source-files"
+  fi
+}
+
+# MAIN PROGRAM ###################################################
+
+### HELPERS ######################################################
 
 # An exec wrapper that allows to echo the command and dry run.
 # That way we can only echo commands and debug easily
@@ -65,28 +168,15 @@ EOF
 brun()
 {
   if [[ -n $1 ]]; then         
-    echo "* $1:"
+    echo "  $1:"
   fi
   if [[ -n $VERBOSE ]] || [[ -z $DRY ]]; then 
-    echo $2
+    echo "  $2"
     echo ""
   fi
   if [[ -z $DRY ]]; then
     eval $2
   fi
-}
-
-validate_config_file(){
-  if [[ ! -e $c ]]; then
-    echo "ERROR: config file missing!"
-    exit 1
-  fi
-}
-
-read_config() {
-  validate_config_file
-  source $c
-  export ORIGIN_NAME
 }
 
 read_params(){
@@ -107,64 +197,23 @@ read_default_params(){
   export c=${c:-$HOME/.sync_media}
 }
 
-origins(){
-  counter=0
-
-  local dest_name=${DEST_NAME[0]}
-  local dest_path=${DEST_PATH[0]}
-
-  while [[ -n ${ORIGIN_NAME[$counter]} ]];
-  do
-
-    local origin_name=${ORIGIN_NAME[$counter]}
-    local origin_path=${ORIGIN_PATH[$counter]}
-    local mount_point=${MOUNT_POINT[$counter]}
-    local origin_dfmt=${ORIGIN_DFMT[$counter]}
-    local origin_sort=${ORIGIN_SORT[$counter]}
-
-
-    if [[ -d $origin_path ]]; then
-      echo "## Syncing source $origin_name"
-      if [[ -n $origin_sort ]]; then
-        origin_sort
-      fi
-      media_sync $origin_path $dest_path$origin_name "--remove-source-files"
-      if [[ -n $mount_point ]]; then
-        origin_unmount
-      fi
-    else
-      echo "WARNING: Skipping $origin_path"
-    fi
-
-    counter=$(( $counter +1 ))
-  done
-echo $DEST_PATH[1]
-  destination_sync ${DEST_PATH[0]} ${DEST_PATH[1]}
-}
-
-media_sync(){
-  if [[ ! -d $2 ]]; then 
-    brun "creating destination dirs" "mkdir -p $2"
-  fi
-  brun "Sync from $1 to $2"  "rsync -X -aP \"$1\" \"$2\" $3"
-}
-
-origin_unmount(){
-  brun "unmounting $mount_point"  "$CMD_UMOUNT $mount_point"
-}
-
-origin_sort(){
-  local a=$origin_path$origin_dfmt
-  local b=$origin_path
-  brun "Sorting files with exiftool" "exiftool -r -d \"$a\" \"-filename<filemodifydate\" \"$b\" "
-}
-
-destination_sync(){
-  if [[ -d $2 ]]; then
-    media_sync $1 $2 "--remove-source-files"
+validate_config_file(){
+  if [[ ! -e $c ]]; then
+    echo "ERROR: config file missing!"
+    exit 1
   fi
 }
 
+read_config() {
+  validate_config_file
+  source $c
+  export ORIGIN_NAME
+}
+
+
+### HELPERS ######################################################
+
+declare -i counter
 declare -a -x ORIGIN_NAME
 declare -a -x ORIGIN_PATH
 declare -a -x ORIGIN_SORT
@@ -181,4 +230,5 @@ declare -x VERBOSE
 read_params "${@}"
 read_default_params
 read_config
-origins
+
+main
