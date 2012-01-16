@@ -3,8 +3,8 @@
 "\e[5C":forward-word
 
 # iTerm2 support
-"\e5D":backward-word
-"\e5c":forward-word
+"\e[1;5D":backward-word
+"\e[1;5C":forward-word
 
 "\e[A":history-search-backward
 "\e[B":history-search-forward
