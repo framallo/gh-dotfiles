@@ -9,12 +9,13 @@ cat << EOF
 sync_media version 1.0
 
 sync_media allows you to quickly download from your camera and other devices and clear the storage.
-So this tool allows you to sync from multiple origins to multiple destinations.
+Also sorts images using exiftool
 
 Process:
-- sync from origins to to Destination 1.
+- sync from origins to stage
 - unmount origins
-- sync from Destination 1 to Destination 2.
+- sorts
+- syncs to destination
 
 If Origin 1 or Destination 2 is not available we skip them
 
@@ -22,9 +23,8 @@ If Origin 1 or Destination 2 is not available we skip them
 Usually your origins are:
 - SD cards
 - DVR
-And your destinations can be:
+And your destination can be:
 - Local HD
-- External HD
 
 CONFIG FILE:
 
@@ -37,8 +37,8 @@ CONFIG FILE EXAMPLE:
   ORIGIN_SORT[1]="yes"
   ORIGIN_DFMT[1]="%Y-%m-%d/%%f.%%e"
 
-  DEST_NAME[3]="HD"
-  DEST_PATH[3]="$HOME/media/"
+  DEST_NAME[0]="HD"
+  DEST_PATH[0]="$HOME/media/"
 
 
 
