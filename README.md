@@ -2,9 +2,9 @@ bash config files for mac osX 10.6
 
 To install run
 
-   git clone git://github.com/framallo/gh-dotfiles.git .gh-dotfiles
-   cd .gh-dotfiles
-   ./install.sh
+     git clone git://github.com/framallo/gh-dotfiles.git .gh-dotfiles
+     cd .gh-dotfiles
+     ./install.sh
 
 
 Features:
